@@ -1,0 +1,29 @@
+# Dirsearch started Sat Jan 10 10:16:39 2026 as: /usr/lib/python3/dist-packages/dirsearch/dirsearch.py -u shaposh.com -e php,html,js,txt -t 20 --format=plain
+
+404    38KB  https://shaposh.com/!.htpasswd
+404    38KB  https://shaposh.com/txt.old
+404    38KB  https://shaposh.com/!.gitignore
+404    38KB  https://shaposh.com/html.bak
+404    38KB  https://shaposh.com/txt.bak
+404    38KB  https://shaposh.com/php.bak
+404    38KB  https://shaposh.com/js.bak
+404    38KB  https://shaposh.com/php.old
+404    38KB  https://shaposh.com/js.old
+302     0B   https://shaposh.com/%2e%2e;/test    -> REDIRECTS TO: https://shaposh.com/test
+404    38KB  https://shaposh.com/html.old
+404    38KB  https://shaposh.com/php.tar
+404    38KB  https://shaposh.com/html.tar
+404    38KB  https://shaposh.com/js.tar
+404    38KB  https://shaposh.com/php.tgz
+404    38KB  https://shaposh.com/txt.tar
+404    38KB  https://shaposh.com/js.tgz
+404    38KB  https://shaposh.com/txt.tgz
+404    38KB  https://shaposh.com/html.tgz
+302     0B   https://shaposh.com/..;/    -> REDIRECTS TO: https://shaposh.com/
+404    38KB  https://shaposh.com/php.zip
+404    38KB  https://shaposh.com/!.htaccess
+404    38KB  https://shaposh.com/js.zip
+404    38KB  https://shaposh.com/html.zip
+404    38KB  https://shaposh.com/txt.zip
+404    38KB  https://shaposh.com/.agilekeychain.zip
+404     0B   https://shaposh.com/.angular-cli.json
