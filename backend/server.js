@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const { exec } = require('child_process');
 
 const app = express();
-const PORT = 3001;
+const API_URL = "https://08ec18d15908.ngrok-free.app";
 
 /* -------------------- MIDDLEWARE -------------------- */
 
