@@ -4,20 +4,34 @@ const helmet = require('helmet');
 const { exec } = require('child_process');
 
 const app = express();
-const API_URL = "https://08ec18d15908.ngrok-free.app";
+const PORT = process.env.PORT || 3001;
 
 /* -------------------- MIDDLEWARE -------------------- */
 
-// Security headers (Fixes Nikto findings)
+// Security headers
 app.use(
   helmet({
-    frameguard: { action: 'sameorigin' }, // X-Frame-Options
-    noSniff: true                          // X-Content-Type-Options
+    frameguard: { action: 'sameorigin' },
+    noSniff: true
   })
 );
 
-app.use(cors());
+// CORS (allow frontend access)
+app.use(
+  cors({
+    origin: '*', // allow all for now (restrict later)
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+  })
+);
+
 app.use(express.json());
+
+/* -------------------- HEALTH CHECK -------------------- */
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Backend is running' });
+});
 
 /* -------------------- TOOL CONFIG -------------------- */
 
@@ -38,7 +52,7 @@ const TOOL_CONFIG = {
 app.post('/api/scan', (req, res) => {
   const { toolId, target } = req.body;
 
-  // Input validation (prevents command injection)
+  // Input validation
   if (!target || !/^[a-zA-Z0-9.-]+$/.test(target)) {
     return res.status(400).json({
       status: 'error',
@@ -60,7 +74,7 @@ app.post('/api/scan', (req, res) => {
   exec(
     command,
     {
-      maxBuffer: 1024 * 1024 * 10, // 10MB output buffer
+      maxBuffer: 1024 * 1024 * 10, // 10MB
       timeout: 1000 * 360,         // 6 minutes
       shell: '/bin/bash'
     },
@@ -73,7 +87,6 @@ app.post('/api/scan', (req, res) => {
         });
       }
 
-      console.log(`[DONE] ${toolId} scan completed`);
       res.json({
         status: 'completed',
         output: stdout || stderr || 'Scan completed with no output'
@@ -84,9 +97,10 @@ app.post('/api/scan', (req, res) => {
 
 /* -------------------- SERVER START -------------------- */
 
-app.listen(PORT, () => {
+// IMPORTANT: bind to 0.0.0.0 for Cloudflare / external access
+app.listen(PORT, '0.0.0.0', () => {
   console.log('\n--- AUTO RECON BACKEND STARTED ---');
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
   console.log(`Available tools: ${Object.keys(TOOL_CONFIG).join(', ')}`);
-  console.log('Ensure tools are installed and available in PATH\n');
+  console.log('Ensure tools are installed and in PATH\n');
 });
