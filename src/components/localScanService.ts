@@ -4,8 +4,11 @@ export const performLocalScan = async (
   commandDisplay: string
 ): Promise<string> => {
   try {
-    // Attempt to connect to local server
-    const response = await fetch('http://localhost:3001/api/scan', {
+    // Get backend URL from environment (Vite + Vercel)
+    const API_URL =
+      import.meta.env.VITE_CLIENT_KEY || 'http://localhost:3001';
+
+    const response = await fetch(`${API_URL}/api/scan`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,19 +25,22 @@ export const performLocalScan = async (
 
   } catch (error) {
     console.error("Local scan failed:", error);
-    
+
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      return `[CONNECTION ERROR] Could not connect to local server.
-      
-1. Ensure 'server.js' is running on your machine:
+      return `[CONNECTION ERROR] Could not connect to backend server.
+
+1. Ensure backend server is running:
    $ node server.js
 
-2. Ensure it is listening on port 3001.
-3. If running in a cloud IDE/VM, ensure port 3001 is forwarded/exposed.
+2. Ensure backend is listening on port 3001 (or correct port).
+3. Ensure ngrok is running and VITE_CLIENT_KEY is correctly set in Vercel.
+4. If ngrok restarted, update the URL in Vercel and redeploy.
 
 Command meant to run: ${commandDisplay}`;
     }
 
-    return `[EXECUTION ERROR] ${error instanceof Error ? error.message : 'Unknown error'}`;
+    return `[EXECUTION ERROR] ${
+      error instanceof Error ? error.message : 'Unknown error'
+    }`;
   }
 };
