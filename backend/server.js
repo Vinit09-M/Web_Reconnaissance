@@ -1,106 +1,72 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const { exec } = require('child_process');
-
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
-/* -------------------- MIDDLEWARE -------------------- */
-
-// Security headers
-app.use(
-  helmet({
-    frameguard: { action: 'sameorigin' },
-    noSniff: true
-  })
-);
-
-// CORS (allow frontend access)
-app.use(
-  cors({
-    origin: '*', // allow all for now (restrict later)
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-  })
-);
-
+app.use(cors());
 app.use(express.json());
 
-/* -------------------- HEALTH CHECK -------------------- */
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Backend is running' });
-});
-
-/* -------------------- TOOL CONFIG -------------------- */
-
+// Configuration for tool execution
+// Ensure these tools are installed in your PATH (apt install nmap, go install ..., etc)
 const TOOL_CONFIG = {
-  nmap: (target) => `nmap -sV -sC -T4 -F ${target}`,
-  subfinder: (target) => `subfinder -d ${target} -silent`,
-  httpx: (target) =>
-    `subfinder -d ${target} -silent | httpx -title -status-code -tech-detect -silent`,
-  waybackurls: (target) => `waybackurls ${target} | head -n 100`,
-  dirsearch: (target) =>
-    `dirsearch -u ${target} -e php,html,js,txt -t 20 --format=plain`,
-  nikto: (target) =>
-    `nikto -h ${target} -maxtime 300s -ask no -nointeractive`
+  'nmap': (target) => `nmap -sV -sC -T4 -F ${target}`, // Fast scan of top 100 ports
+  // Added -exclude-sources digitorus to prevent known segmentation fault/panic in recent versions
+  'subfinder': (target) => `subfinder -d ${target} -silent -exclude-sources digitorus`,
+  // Updated httpx to also use the safe subfinder command
+  'httpx': (target) => `subfinder -d ${target} -silent -exclude-sources digitorus | httpx -title -status-code -tech-detect -silent`,
+  'waybackurls': (target) => `waybackurls ${target} | head -n 50`, // Limit to 50 for UI performance
+  'dirsearch': (target) => `dirsearch -u ${target} -e php,html,js,txt -t 20 --format=plain`,
+  'dirb': (target) => `dirb ${target} `,
 };
-
-/* -------------------- API ROUTE -------------------- */
 
 app.post('/api/scan', (req, res) => {
   const { toolId, target } = req.body;
 
-  // Input validation
+  // Basic security validation
   if (!target || !/^[a-zA-Z0-9.-]+$/.test(target)) {
-    return res.status(400).json({
-      status: 'error',
-      output: 'Invalid domain format'
-    });
+    return res.status(400).json({ output: 'Error: Invalid domain format.' });
   }
 
   const commandGen = TOOL_CONFIG[toolId];
   if (!commandGen) {
-    return res.status(400).json({
-      status: 'error',
-      output: `Tool '${toolId}' not supported`
-    });
+    return res.status(400).json({ output: `Error: Tool '${toolId}' not configured in server.js` });
   }
 
   const command = commandGen(target);
   console.log(`[EXEC] ${command}`);
 
-  exec(
-    command,
-    {
-      maxBuffer: 1024 * 1024 * 10, // 10MB
-      timeout: 1000 * 360,         // 6 minutes
-      shell: '/bin/bash'
-    },
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`[ERROR] ${error.message}`);
-        return res.json({
-          status: 'failed',
-          output: stdout + '\n' + (stderr || error.message)
-        });
+  // Execute the command
+  exec(command, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`[ERR] ${error.message}`);
+      // We return the error output/stderr so the user sees what happened
+      // Check if it was a panic
+      const outputMsg = stdout + '\n' + (stderr || error.message);
+      if (outputMsg.includes('panic:') || outputMsg.includes('SIGSEGV')) {
+         return res.json({
+            status: 'failed',
+            output: `[CRITICAL TOOL FAILURE] The external tool crashed.\n\nRaw Error:\n${outputMsg}\n\nTroubleshooting:\n- Try running '${command}' manually in your terminal.\n- Update the tool (go install ...@latest).`
+         });
       }
 
-      res.json({
-        status: 'completed',
-        output: stdout || stderr || 'Scan completed with no output'
+      return res.json({ 
+        status: 'failed', 
+        output: outputMsg 
       });
     }
-  );
+    
+    console.log(`[DONE] ${toolId} on ${target}`);
+    res.json({ 
+      status: 'completed', 
+      output: stdout || stderr || "Command executed but returned no output." 
+    });
+  });
 });
 
-/* -------------------- SERVER START -------------------- */
-
-// IMPORTANT: bind to 0.0.0.0 for Cloudflare / external access
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('\n--- AUTO RECON BACKEND STARTED ---');
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Available tools: ${Object.keys(TOOL_CONFIG).join(', ')}`);
-  console.log('Ensure tools are installed and in PATH\n');
+app.listen(PORT, () => {
+  console.log(`\n--- LOCAL RECON SERVER STARTED ---`);
+  console.log(`Listening on http://reconai:${PORT}`);
+  console.log(`Ready to execute: ${Object.keys(TOOL_CONFIG).join(', ')}`);
+  console.log(`Make sure these tools are installed in your system PATH.\n`);
 });

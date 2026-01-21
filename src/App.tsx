@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Shield, Download, Play, Settings, Search, ArrowRight, Zap, Target, Terminal as TerminalIcon } from 'lucide-react';
+import { Activity, Shield, Download, Play, Settings, Search, ArrowRight, Zap, Target } from 'lucide-react';
 import { AVAILABLE_TOOLS } from './types';
 import type { ReconTool, ScanResult, LogEntry } from './types';
 import { performLocalScan } from './services/localScanService';
@@ -141,12 +141,12 @@ const App: React.FC = () => {
 
   if (view === 'home') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden text-center px-4">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden text-center px-4">
         {/* Animated Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,240,255,0.05),transparent_70%)]"></div>
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyber-primary/30 to-transparent"></div>
         
-        <div className="relative z-10 max-w-3xl w-full">
+        <div className="relative z-10 max-w-3xl w-full mx-auto">
            <div className="flex justify-center mb-6">
               <div className="p-4 rounded-full bg-cyber-panel border border-cyber-primary/30 shadow-[0_0_30px_rgba(0,240,255,0.2)] animate-pulse-fast">
                 <Shield size={64} className="text-cyber-primary" />
@@ -156,15 +156,10 @@ const App: React.FC = () => {
            <h1 className="text-5xl md:text-7xl font-bold font-sans tracking-tight mb-4 glitch-text" data-text="ReconAI">
              Recon<span className="text-cyber-primary">AI</span>
            </h1>
-           <p className="text-xl text-cyber-muted mb-4 max-w-2xl mx-auto">
+           <p className="text-xl text-cyber-muted mb-12 max-w-2xl mx-auto">
              Local Native Reconnaissance Dashboard
            </p>
            
-           <div className="mb-12 inline-flex items-center gap-2 px-4 py-2 bg-cyber-dark/50 border border-cyber-secondary/30 rounded-full text-sm text-cyber-secondary">
-              <TerminalIcon size={14} />
-              <span>Requires `node server.js` running locally</span>
-           </div>
-
            <div className="bg-cyber-panel/50 backdrop-blur-md p-2 rounded-xl border border-cyber-primary/30 flex items-center max-w-xl mx-auto shadow-2xl transition-transform focus-within:scale-105 duration-300">
               <Search className="ml-4 text-cyber-muted" />
               <input 
